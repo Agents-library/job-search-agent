@@ -16,10 +16,10 @@ network calls are to the single LLM provider Anshul has configured.
 
 ## System Boundaries
 
-- `src/commands/` — CLI entry points only (`init`, `config`, `tailor`).
-  Each command parses flags, calls into `src/lib/`, and handles top-level
-  error/output formatting. No business logic lives here. `config` is
-  strictly read-only — it never writes `~/.job-agent/config.json` and
+- `src/commands/` — CLI entry points only (`init`, `config`, `profile`,
+  `tailor`). Each command parses flags, calls into `src/lib/`, and handles
+  top-level error/output formatting. No business logic lives here. `config`
+  is strictly read-only — it never writes `~/.job-agent/config.json` and
   never triggers the first-run prompt (an unconfigured install just
   prints "not configured yet, run `job-agent init`").
 - `src/lib/providers/` — one file per LLM vendor (`claude.ts`, `openai.ts`,
@@ -48,10 +48,12 @@ network calls are to the single LLM provider Anshul has configured.
 - **Config**: `~/.job-agent/config.json` — `{ provider, apiKey, model }`.
   `model` is set during `init`/first-run (see Invariant 7) — not left
   implicit — but remains overridable per-run via `--model`. File
-  permissions restricted to the owning user. This is the *only*
-  persistent state the CLI keeps between runs.
-- **Inputs**: read from wherever the user points `--jobs` / `--resume` /
-  `--dream` — never copied or cached elsewhere.
+  permissions restricted to the owning user.
+- **Profile**: `~/.job-agent/profile.json` — default input paths for
+  `tailor` (`resume`, optional `dream`, `jobsDir`, `out`, `threshold`).
+  Set via `job-agent profile`; flags always override saved values.
+- **Inputs**: read from profile defaults and/or `--jobs` / `--resume` /
+  `--dream` flags — never copied or cached elsewhere.
 - **Outputs**: written to `--out` (default `./output`) — the .xlsx report
   and one tailored-resume .md per surviving company. Nothing is written
   outside the specified output directory except the config file above.

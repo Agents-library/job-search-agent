@@ -15,6 +15,15 @@ export type ResolveConfigResult =
   | { configured: true; config: JobAgentConfig }
   | { configured: false };
 
+/** Saved input paths and defaults for `tailor` (separate from LLM config). */
+export interface JobAgentProfile {
+  resume: string;
+  dream?: string;
+  out?: string;
+  jobsDir?: string;
+  threshold?: number;
+}
+
 export interface JobListing {
   jobId: string;
   title: string;
@@ -32,6 +41,12 @@ export interface MatchResult {
   matchedSkills: string[];
   missingSkills: string[];
   rationale: string;
+}
+
+export interface ScoredJob {
+  job: JobListing;
+  match: MatchResult;
+  isDreamCompany: boolean;
 }
 
 export interface LLMProvider {

@@ -4,12 +4,13 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Step 4 (parsers) complete, 2026-08-25. Ready for Step 5
-  (`implementation-plan/step-5-match-scoring.md`).
+- Complete (2026-08-25). Nine implementation-plan steps are done. Post-plan UX:
+  `profile` command + interactive `tailor` (2026-08-25).
 
 ## Current Goal
 
-- Step 5: match scoring (`implementation-plan/step-5-match-scoring.md`).
+- None. Remaining work is usage and review (live LLM runs, hand-check
+  tailored resumes), not further plan steps.
 
 ## Completed
 
@@ -47,35 +48,105 @@ Update this file after every meaningful implementation change.
   trim, strip Inc/Inc./LLC/Ltd/Pvt Ltd/Private Limited) plus complete
   token containment in either direction (not substring). Verified via
   `npx tsx scripts/verify-parsers.ts` and `npm run build`.
+- Step 5: match scoring — `ScoredJob` in `src/types.ts`; fixed rubric in
+  `src/lib/match/rubric.ts` (40% skills, 20% level, 20% responsibilities,
+  20% keywords); `src/lib/match/run.ts` scores every job with bounded
+  concurrency (default 3), `withRetry` on each call, incremental progress
+  lines (`Scoring N/M  Company — Title … NN%`), per-job skip on failure;
+  `isDreamCompany` computed in `run.ts` when a dream set is passed (Step 6
+  filtering still applies the threshold). Adapters import `scoreMatchPrompt`
+  from the rubric (placeholder scoring prompt removed). Shared terminal
+  colors in `src/lib/term.ts`. Verified: `npm run build`; mock checks in
+  `npx tsx scripts/verify-match.ts` (failure isolation, incremental
+  progress, concurrency bound, dream flag). Live Gemini run against
+  fixtures hit transient 503/rate-limit — re-run when the API is healthy for
+  hand-check sanity.
+- Step 6: filtering and Excel report — `DEFAULT_MATCH_THRESHOLD` (40) in
+  `src/lib/match/filter.ts`; `filterJobs()` keeps dream companies regardless of
+  score plus non-dream jobs at or above the threshold; `writeReport()` in
+  `src/lib/excel/writeReport.ts` writes `match-report-<timestamp>.xlsx` (ms
+  precision) to `--out` with spec columns, Match % descending sort, dream rows
+  bold with a leading ★ on Company. Verified: `npm run build`;
+  `npx tsx scripts/verify-filter-excel.ts`.
+- Step 7: resume tailoring — shared no-fabrication prompt in
+  `src/lib/tailor/prompt.ts` (Invariant 3; adapters import it the same way
+  they import the scoring rubric); `src/lib/tailor/run.ts` tailors the
+  filtered `ScoredJob[]` with bounded concurrency (default 3), `withRetry`,
+  incremental `Tailoring N/M  Company — Title` lines, per-job skip on
+  failure, and writes `<company-slug>-<role-slug>.md` under `--out` (job-id
+  suffix only on in-batch collisions). Placeholder tailoring prompt removed.
+  Verified: `npm run build`; mock checks in `npx tsx scripts/verify-tailor.ts`
+  (prompt constraints, slug/collision filenames, failure isolation,
+  incremental progress, concurrency bound). Live run skipped — no resolved
+  config in that session; truthfulness hand-diff still needs a real key.
+- Step 8: `tailor` command e2e — `src/commands/tailor.ts` wires Steps 2/4–7:
+  required `--jobs`/`--resume`, optional `--dream`, `--out` (default
+  `./output`), `--threshold` (40), `--concurrency` (3), `--dry-run`,
+  `--verbose`, `--model`. Order: parse → score (skip on dry-run) → filter →
+  Excel → tailor (skip on dry-run) → summary. `ensureConfigured` skipped for
+  `--dry-run`; dry-run keeps dream companies only and prints
+  `DRY RUN — no LLM calls were made.`; input failures fail fast with a
+  clear message (stack only with `--verbose`). Verified: `npm run build`;
+  `npx tsx scripts/verify-tailor-e2e.ts` (dry-run banner + dream keep list,
+  distinct report filenames on re-run, missing `--jobs` message, threshold
+  40 vs 90 via the same `filterJobs` the command uses). Full live run with
+  real scoring/tailoring still needs a configured provider key.
+- Step 9: packaging and docs — root `README.md`: `npm install && npm run
+  build`, `npm link`, `init` walkthrough, `tailor` flags matching `--help`,
+  40%/dream-company filter, no-fabrication as a prompt-level constraint
+  (review before sending), and a five-provider section with key links plus
+  `--model` / config `model` override of per-provider defaults. This
+  tracker: Current Phase Complete, all steps Completed, open questions
+  resolved or listed as known limitations. Verified: clean
+  `node_modules`/`dist` reinstall + build; `job-agent` / `node dist/cli.js`
+  `--help` matches the README; no leftover Next Up / In Progress.
+- Post-plan UX: `job-agent profile` saves `~/.job-agent/profile.json`
+  (resume, optional dream list, jobsDir, out, threshold). `tailor` uses
+  profile defaults when flags are omitted; interactive mode lists recent
+  job scans; `--jobs latest`; pre-flight confirm `[Y/n/dry-run]`; `-y` to
+  skip. Verified: `npm run build`; `npx tsx scripts/verify-tailor-e2e.ts`.
 
 ## In Progress
 
-- None yet.
+- None.
 
 ## Next Up
 
-- Step 5: match scoring (see implementation-plan/).
+- None. Implementation plan is finished.
 
 ## Open Questions
 
-- Default output directory for `tailor` (proposed: `./output`) — confirm
-  with Anshul or leave as the default and let him override with `--out`.
-- Dream-company name matching: normalize + exact match, then complete
-  token containment in either direction (not raw substring). "Google"
-  matches "Google India Private Limited"; `isDreamCompany("Metasoft")`
-  is false when the dream set contains "Meta".
+None remaining as build blockers. Carried forward as **known limitations**
+(not unfinished plan items):
+
+- **No-fabrication is prompt-only.** Tailored resumes must still be
+  reviewed before sending. Not a formal guarantee.
+- **Live end-to-end with a real key** was not required to close Steps
+  7–8 in this environment. A full `job-agent tailor` (no `--dry-run`)
+  still needs `job-agent init` or env-var config; Gemini scoring has
+  previously hit transient 503/rate-limit.
+- **Job aggregation (Adzuna/JSearch)** stays out of scope unless Anshul
+  asks otherwise — see project-overview.md Out of Scope.
+- **Dedup against `job-search-seen.md`** (Cowork-native scheduled-task
+  path) is not shared with this CLI. The two stay fully separate.
+
+Resolved during the build:
+
+- ~~Default output directory for `tailor` (proposed: `./output`) — confirm
+  with Anshul or leave as the default and let him override with `--out`.~~
+  **Resolved 2026-08-25**: Step 8 ships `--out` defaulting to `./output`.
+- ~~Dream-company name matching: normalize + exact match, then complete
+  token containment in either direction (not raw substring).~~
+  **Resolved 2026-08-25**: implemented in Step 4 (`isDreamCompany`).
+  "Google" matches "Google India Private Limited";
+  `isDreamCompany("Metasoft")` is false when the dream set contains
+  "Meta".
 - ~~Per-provider default model IDs will drift over time...~~ **Resolved
   2026-08-24**: model is a user choice made during `init`, fetched live
   from each provider's models-list endpoint where one exists (falls back
-  to free-text with a suggested default otherwise). See architecture.md
-  Invariant 7 and implementation-plan Steps 2–3.
-- Whether this CLI should eventually also absorb the earlier
-  Adzuna/JSearch job-aggregation idea from the shelved web-app spec, or
-  stay scoped to matching/tailoring only (current assumption: stay
-  scoped — see project-overview.md's Out of Scope).
-- Whether dedup against `job-search-seen.md` (used by the Cowork-native
-  scheduled-task path) should ever be shared with this CLI's output, or
-  whether the two stay fully separate. Currently assumed fully separate.
+  to free-text with a suggested default otherwise). README documents that
+  `--model` / config `model` override the adapter default. See
+  architecture.md Invariant 7 and implementation-plan Steps 2–3.
 
 ## Architecture Decisions
 
@@ -144,3 +215,27 @@ Update this file after every meaningful implementation change.
   re-run checks with `npx tsx scripts/verify-parsers.ts`. Dream-company
   substring matching is known to over-match (Meta ⊆ Metasoft) — left as
   an open question rather than silently tightening beyond the spec.
+- 2026-08-25: Step 5 implemented. Re-run mock + optional live checks with
+  `npx tsx scripts/verify-match.ts` (set `JOB_AGENT_PROVIDER` /
+  `JOB_AGENT_API_KEY` / `JOB_AGENT_MODEL` or use saved config for live
+  scoring). Dream flag is set in `scoreJobs()` when `dreamCompanies` is
+  passed; Step 6 owns threshold filtering.
+- 2026-08-25: Step 6 implemented. Re-run checks with
+  `npx tsx scripts/verify-filter-excel.ts`. Excel timestamp includes
+  millisecond precision so rapid re-runs do not overwrite prior reports.
+- 2026-08-25: Step 7 implemented. Re-run mock + optional live checks with
+  `npx tsx scripts/verify-tailor.ts` (set `JOB_AGENT_PROVIDER` /
+  `JOB_AGENT_API_KEY` / `JOB_AGENT_MODEL` or use saved config for live
+  tailoring). The `tailor` CLI command is still a stub until Step 8.
+- 2026-08-25: Step 8 implemented. Re-run offline checks with
+  `npx tsx scripts/verify-tailor-e2e.ts`. Live end-to-end
+  (`job-agent tailor --jobs … --resume … --dream …` without `--dry-run`)
+  still needs `job-agent init` or env-var config in this environment.
+- 2026-08-25: Step 4 dream matching was later tightened to complete
+  token containment (not raw substring); the earlier session note about
+  Meta ⊆ Metasoft is historical. Current behavior is documented in the
+  README and marked resolved above.
+- 2026-08-25: Step 9 implemented. Root `README.md` plus this tracker
+  marked Complete. Verification: delete `node_modules`/`dist`,
+  `npm install && npm run build`, confirm `node dist/cli.js --help` and
+  `tailor --help` match the README with no extra undocumented steps.

@@ -40,8 +40,11 @@ building until Anshul has given the go-ahead (see
 - `job-agent init` — (re)configure provider, API key, and model
 - `job-agent config` — read-only view of the current setup
   (never prints the API key)
+- `job-agent profile` — save default resume, dream list, jobs folder, and
+  output paths for `tailor`
 - `job-agent tailor --jobs <path> --resume <path> --dream <path>`
-  — score, filter, write Excel + tailored resumes
+  — score, filter, write Excel + tailored resumes (flags optional when a
+  profile is set; run `job-agent tailor` interactively to pick the latest scan)
 
 ## Behavioral Guidelines
 

@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { registerConfig } from "./commands/config";
 import { registerInit } from "./commands/init";
+import { registerProfile } from "./commands/profile";
 import { registerTailor } from "./commands/tailor";
 
 const program = new Command();
@@ -15,6 +16,7 @@ program
 
 registerInit(program);
 registerConfig(program);
+registerProfile(program);
 registerTailor(program);
 
 void program.parseAsync(process.argv).catch((err: unknown) => {

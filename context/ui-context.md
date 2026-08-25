@@ -7,14 +7,32 @@ tool rather than a pile of ad hoc `console.log` calls.
 
 ## Interaction Model
 
-- Three commands: `job-agent init` (configure provider/key/model),
-  `job-agent config` (view current setup, read-only), and
-  `job-agent tailor` (run the pipeline). Running `init` or `tailor` with
+- Four commands: `job-agent init` (configure provider/key/model),
+  `job-agent config` (view current setup, read-only),
+  `job-agent profile` (save default resume/dream/jobs-folder/output paths),
+  and `job-agent tailor` (run the pipeline). Running `init` or `tailor` with
   no saved config falls through to the same first-run prompt `init`
   uses, then continues into the original command — the user never has to
   know `init` exists to get started. `config` is the one exception: it
   never prompts, since prompting would defeat the point of a quick,
   no-side-effects status check.
+- `job-agent profile` output, plain and short:
+  ```
+  Resume:    ~/Documents/resume.md
+  Dream:     ~/Documents/dream.md
+  Jobs dir:  ~/Downloads
+  Output:    ./output
+  Threshold: 40%
+  Profile:   ~/.job-agent/profile.json
+  ```
+  Re-running offers to update. `tailor` reads these when flags are omitted.
+- `job-agent tailor` with missing `--jobs` / `--resume`: in an interactive
+  terminal, lists recent `.md` files in the profile jobs folder (default
+  `~/Downloads`) and prompts for any path still missing. Non-interactive
+  runs (pipes/CI) must pass flags or have a complete profile.
+- Before any LLM calls, `tailor` prints a pre-flight summary (job count,
+  paths, threshold) and asks `Proceed? [Y/n/dry-run]` unless `--dry-run`,
+  `-y`, or stdin is not a TTY.
 - `job-agent config` output, plain and short:
   ```
   Provider: openrouter

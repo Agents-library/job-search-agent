@@ -2,11 +2,9 @@ import type { LLMProvider, MatchResult, ProviderName } from "../../types";
 import { ProviderError } from "./errors";
 import { providerRequest } from "./http";
 import { extractJson, isRecord, parseMatchResult } from "./parse";
-import {
-  PING_PROMPT,
-  scoreMatchPrompt,
-  tailorResumePrompt,
-} from "./placeholders";
+import { scoreMatchPrompt } from "../match/rubric";
+import { tailorResumePrompt } from "../tailor/prompt";
+import { PING_PROMPT } from "./placeholders";
 
 export type CompatibleOptions = {
   provider: ProviderName;

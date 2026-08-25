@@ -2,11 +2,9 @@ import type { LLMProvider, MatchResult } from "../../types";
 import { ProviderError } from "./errors";
 import { providerRequest } from "./http";
 import { extractJson, isRecord, parseMatchResult, stringArray } from "./parse";
-import {
-  PING_PROMPT,
-  scoreMatchPrompt,
-  tailorResumePrompt,
-} from "./placeholders";
+import { scoreMatchPrompt } from "../match/rubric";
+import { tailorResumePrompt } from "../tailor/prompt";
+import { PING_PROMPT } from "./placeholders";
 
 export const GEMINI_DEFAULT_MODEL = "gemini-flash-latest";
 

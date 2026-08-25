@@ -37,11 +37,18 @@ runs against).
 
 - [ ] Against 2–3 fixture jobs from the filtered set, with a real
       provider key: each produces a distinct, readable Markdown resume.
+      (Mock + filename/progress/failure checks pass in
+      `scripts/verify-tailor.ts`. Live tailoring skipped on 2026-08-25 —
+      no resolved config in the verification environment. Re-run with
+      `JOB_AGENT_PROVIDER` / `JOB_AGENT_API_KEY` / `JOB_AGENT_MODEL` or
+      saved `init` config.)
 - [ ] Manually diff at least one tailored resume against the source
       resume — every claim in the tailored version must trace back to
       something present in the source. Flag and fix any invented detail
       immediately; this check is not optional.
-- [ ] Filenames are collision-free and correctly slugified even for
+      (Blocked on a successful live run; use
+      `npx tsx scripts/verify-tailor.ts` with a configured key.)
+- [x] Filenames are collision-free and correctly slugified even for
       companies/titles with spaces, punctuation, or unusual casing.
-- [ ] A simulated failure on one job's tailoring call doesn't abort the
+- [x] A simulated failure on one job's tailoring call doesn't abort the
       rest of the batch.

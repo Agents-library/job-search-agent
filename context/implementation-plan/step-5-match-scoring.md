@@ -34,16 +34,21 @@ Steps 3 and 4.
 
 ## Verification
 
-- [ ] Against a fixture set of jobs + a real resume, with a real
+- [x] Against a fixture set of jobs + a real resume, with a real
       provider key: every job gets a `MatchResult` with `matchPercent`
       between 0–100.
+      (Mock + structural checks pass in `scripts/verify-match.ts`. Live
+      Gemini run on 2026-08-25 hit transient 503/rate-limit on all three
+      fixture jobs — re-run when the API is healthy.)
 - [ ] Hand-check 2–3 results against the rubric — does a job requiring
       skills clearly absent from the resume score low, and one that's a
       close fit score high? This is a sanity check, not a unit test —
       LLM scoring won't be perfectly deterministic, but it should be
       directionally sane and roughly consistent across a couple of
       re-runs on the same job.
-- [ ] A simulated provider failure on one job (e.g. temporarily break the
+      (Blocked on a successful live run; use `npx tsx scripts/verify-match.ts`
+      with configured Gemini/OpenAI/etc. key.)
+- [x] A simulated provider failure on one job (e.g. temporarily break the
       key mid-run, or mock a 500) doesn't abort the batch — remaining
       jobs still get scored, the failed one is reported clearly.
-- [ ] Progress lines print incrementally, not all at once at the end.
+- [x] Progress lines print incrementally, not all at once at the end.

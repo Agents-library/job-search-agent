@@ -172,3 +172,26 @@ export async function chooseIndex(
     console.log(`Please enter a number between 1 and ${count}.`);
   }
 }
+
+export type ProceedChoice = "proceed" | "dry-run" | "abort";
+
+export async function confirmProceed(
+  prompter: Prompter,
+  message: string,
+): Promise<ProceedChoice> {
+  for (;;) {
+    const answer = (
+      await prompter.question(`${message} [Y/n/dry-run] `)
+    ).toLowerCase();
+    if (answer === "" || answer === "y" || answer === "yes") {
+      return "proceed";
+    }
+    if (answer === "n" || answer === "no") {
+      return "abort";
+    }
+    if (answer === "d" || answer === "dry" || answer === "dry-run") {
+      return "dry-run";
+    }
+    console.log("Please answer y, n, or dry-run.");
+  }
+}
