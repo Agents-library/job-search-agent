@@ -59,31 +59,31 @@ Step 1.
 
 ## Verification
 
-- [ ] Fresh machine (no `~/.job-agent/`): running `job-agent init`
+- [x] Fresh machine (no `~/.job-agent/`): running `job-agent init`
       prompts for provider, then key, then model, and
       `~/.job-agent/config.json` exists afterward with the right shape
       (including `model`) and restricted permissions.
-- [ ] Running `job-agent init` again when a config already exists asks
+- [x] Running `job-agent init` again when a config already exists asks
       for confirmation before overwriting, and offers the "keep key,
       re-pick model only" shortcut (per `ui-context.md`).
-- [ ] With a stub adapter whose `listModels()` throws: `init` falls back
+- [x] With a stub adapter whose `listModels()` throws: `init` falls back
       to the free-text prompt pre-filled with `defaultModel` instead of
       crashing.
-- [ ] `job-agent init --model <id>` sets that exact model without
+- [x] `job-agent init --model <id>` sets that exact model without
       showing the list/prompt.
-- [ ] Deleting `~/.job-agent/config.json` and running `job-agent tailor`
+- [x] Deleting `~/.job-agent/config.json` and running `job-agent tailor`
       (still a stub) triggers the same first-run prompt before falling
       through to the stub body.
-- [ ] Setting `JOB_AGENT_PROVIDER`/`JOB_AGENT_API_KEY` env vars bypasses
+- [x] Setting `JOB_AGENT_PROVIDER`/`JOB_AGENT_API_KEY` env vars bypasses
       both the saved file and any prompt.
-- [ ] The API key never appears in full in any console output, log, or
+- [x] The API key never appears in full in any console output, log, or
       error message — including `config`'s output, which only ever shows
       a masked prefix/suffix.
-- [ ] `job-agent config` after a completed `init` prints the correct
+- [x] `job-agent config` after a completed `init` prints the correct
       provider, model, masked key, and config path, and does not prompt
       for anything or write to the config file.
-- [ ] `job-agent config` on a fresh machine (no saved config) prints the
+- [x] `job-agent config` on a fresh machine (no saved config) prints the
       one-line "not configured" message and exits 0 — it does NOT fall
       into the first-run prompt the way `init`/`tailor` do.
-- [ ] After using `init`'s "keep key, re-pick model" shortcut, `config`
+- [x] After using `init`'s "keep key, re-pick model" shortcut, `config`
       reflects the new model with the same (unchanged) masked key.

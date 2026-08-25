@@ -1,0 +1,22 @@
+{
+  "name": "job-agent",
+  "version": "0.1.0",
+  "description": "Score scraped job listings against a resume, write an Excel match report, and generate tailored Markdown resumes.",
+  "bin": {
+    "job-agent": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.12.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.3.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}

@@ -64,22 +64,28 @@ to instantiate and with which key).
 
 ## Verification
 
-- [ ] For each of the five providers, with a real key for at least the
+- [x] For each of the five providers, with a real key for at least the
       one(s) Anshul actually has: `ping()` returns successfully.
-- [ ] For each provider implementing `listModels()`: returns a non-empty
+      (Verified live against Gemini. The other four adapters return a
+      provider-labeled error on a bad key rather than succeeding.)
+- [x] For each provider implementing `listModels()`: returns a non-empty
       list of real, currently-available model IDs (spot-check one or two
       against the vendor's own docs/console).
-- [ ] For a provider *not* implementing `listModels()` (or one where the
+      (Gemini live list included `gemini-flash-latest` / `gemini-3.6-flash`.
+      OpenRouter `/models` returned a large live catalog.)
+- [x] For a provider *not* implementing `listModels()` (or one where the
       call is deliberately made to fail, e.g. bad key): the adapter
       exposes `defaultModel` and the caller (Step 2's `init`) falls back
       to free-text cleanly rather than crashing.
-- [ ] OpenRouter's list (likely large) doesn't make the `init` flow
+- [x] OpenRouter's list (likely large) doesn't make the `init` flow
       unusable — confirm the filtering/typing UX actually helps rather
       than just dumping hundreds of lines to the terminal.
-- [ ] Swapping providers only requires changing config — no code path
+      (`init` requires a substring filter when the list is longer than 25
+      and will not print more than 40 matches.)
+- [x] Swapping providers only requires changing config — no code path
       outside `src/lib/providers/` differs by provider.
-- [ ] A deliberately invalid API key produces a clear, provider-labeled
+- [x] A deliberately invalid API key produces a clear, provider-labeled
       error (not a stack trace), without ever printing the key.
-- [ ] Adding a hypothetical sixth provider is possible by adding exactly
+- [x] Adding a hypothetical sixth provider is possible by adding exactly
       one new file plus one line in `providers/index.ts` — confirm by
       reading through the interface, don't need to actually build one.

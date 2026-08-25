@@ -34,17 +34,17 @@ be built in parallel with those if useful).
 
 ## Verification
 
-- [ ] Fixture job-scan .md file (a real or representative output from
+- [x] Fixture job-scan .md file (a real or representative output from
       the Chrome extension) parses into the expected number of
       `JobListing` objects with all fields correct.
-- [ ] A malformed/partial listing (missing an optional field) doesn't
+- [x] A malformed/partial listing (missing an optional field) doesn't
       crash the parser — it just omits that field.
-- [ ] A sample `.md` resume and a sample `.docx` resume both produce
+- [x] A sample `.md` resume and a sample `.docx` resume both produce
       sensible, non-garbled plain text.
-- [ ] Dream-companies fixtures in all three supported formats (`.md`,
+- [x] Dream-companies fixtures in all three supported formats (`.md`,
       `.csv`, `.xlsx`) all produce the same normalized set for the same
       underlying company names.
-- [ ] `isDreamCompany` correctly matches known variants (e.g. "Google"
+- [x] `isDreamCompany` correctly matches known variants (e.g. "Google"
       vs "Google India Private Limited") and correctly does NOT match
       unrelated companies with a shared substring — check for
       false-positive risk here since substring matching can over-match

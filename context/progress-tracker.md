@@ -4,17 +4,49 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Not started. Spec + implementation plan only, written 2026-08-24.
-  Anshul asked explicitly not to start building yet.
+- Step 4 (parsers) complete, 2026-08-25. Ready for Step 5
+  (`implementation-plan/step-5-match-scoring.md`).
 
 ## Current Goal
 
-- None yet — awaiting the go-ahead to start Step 1
-  (`implementation-plan/step-1-project-scaffold.md`).
+- Step 5: match scoring (`implementation-plan/step-5-match-scoring.md`).
 
 ## Completed
 
-- None yet.
+- Step 1: project scaffold — `package.json` (`job-agent`, bin, `build`/
+  `dev` scripts, commander/exceljs/mammoth + typescript/@types/node/tsx),
+  strict `tsconfig.json`, folder layout per architecture.md, Commander
+  entrypoint with stub `init`/`config`/`tailor` (each prints "not
+  implemented yet"; `--help` documents intended flags). Verified:
+  `npm install`, `npm run build` (zero TS errors), `node dist/cli.js
+  --help` lists all three commands, stubs run without crashing.
+- Step 2: config and `init` — `JobAgentConfig` / `ProviderName` in
+  `src/types.ts`; `src/lib/config.ts` reads/writes `~/.job-agent/config.json`
+  (chmod 0700/0600 best-effort on Windows) and `resolveConfig()` prefers
+  `JOB_AGENT_PROVIDER` / `JOB_AGENT_API_KEY` / `JOB_AGENT_MODEL`;
+  interactive `init` (provider, masked key, model list or free-text
+  fallback, `--model` skip, overwrite confirm + keep-key shortcut);
+  read-only `config`; `ensureConfigured()` on `tailor` (still a stub
+  afterwards). Stub adapter in `src/lib/providers/` until Step 3.
+- Step 3: `LLMProvider` (`scoreMatch`, `tailorResume`, optional
+  `listModels`, `defaultModel`, `ping`) plus `MatchResult` in
+  `src/types.ts`. Shared retry/backoff in `src/lib/providers/retry.ts`.
+  Five adapters (`claude`, `openai`, `grok`, `gemini`, `openrouter`)
+  hide vendor request/response shape; `src/lib/providers/index.ts` is
+  the only `ProviderName` switch. `init` type-to-filter for large model
+  lists (OpenRouter). Verified: `npm run build`; Gemini live `ping` /
+  `listModels` / placeholder `scoreMatch`+`tailorResume`; invalid keys
+  yield provider-labeled errors with the key redacted; `listModels`
+  failure still falls back to `defaultModel` free-text in `init`.
+- Step 4: parsers — `JobListing` in `src/types.ts`; `parseJobs` (Chrome
+  extension `## title` / `- **Field:**` / `**Description:**` block);
+  `parseResume` (`.md`/`.txt` as text, `.docx` via mammoth);
+  `parseDreamCompanies` (`.md`/`.txt` one-per-line with optional `-`/`*`
+  bullets, `.csv` first column, `.xlsx` first column of first sheet with
+  header skip); `isDreamCompany` uses the same normalization (lowercase,
+  trim, strip Inc/Inc./LLC/Ltd/Pvt Ltd/Private Limited) plus complete
+  token containment in either direction (not substring). Verified via
+  `npx tsx scripts/verify-parsers.ts` and `npm run build`.
 
 ## In Progress
 
@@ -22,16 +54,16 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- Step 1: project scaffold (see implementation-plan/).
+- Step 5: match scoring (see implementation-plan/).
 
 ## Open Questions
 
 - Default output directory for `tailor` (proposed: `./output`) — confirm
   with Anshul or leave as the default and let him override with `--out`.
-- Dream-company name matching: exact/normalized match only, or fuzzy
-  matching (e.g. "Google" vs "Google LLC" vs "Google India")? Proposed in
-  architecture: normalize + substring match; confirm this is good enough
-  before Step 4.
+- Dream-company name matching: normalize + exact match, then complete
+  token containment in either direction (not raw substring). "Google"
+  matches "Google India Private Limited"; `isDreamCompany("Metasoft")`
+  is false when the dream set contains "Meta".
 - ~~Per-provider default model IDs will drift over time...~~ **Resolved
   2026-08-24**: model is a user choice made during `init`, fetched live
   from each provider's models-list endpoint where one exists (falls back
@@ -97,3 +129,18 @@ Update this file after every meaningful implementation change.
   per-provider model choice, not just provider choice. Folded into the
   spec the same session rather than as a separate follow-up round —
   see the Architecture Decisions entry above and Steps 2/3.
+- 2026-08-25: Anshul gave the go-ahead to implement Step 1. Scaffold is
+  in place; `init`/`config`/`tailor` remain stubs until later steps.
+- 2026-08-25: Step 2 implemented. `tailor` still has no pipeline — it
+  only runs the first-run prompt (or env-var bypass) then prints "not
+  implemented yet". Real adapters replace the Step 2 stub in Step 3.
+- 2026-08-25: Step 3 implemented. Placeholder prompts only — real
+  scoring/tailoring prompts are Steps 5 and 7. Live `ping` verified on
+  Gemini (`GEMINI_API_KEY`); Claude/OpenAI/Grok/OpenRouter need a real
+  key for a live `ping` but invalid-key errors are labeled and do not
+  print the key. Gemini's suggested default is `gemini-flash-latest`
+  (the previous `gemini-2.0-flash` id is no longer served).
+- 2026-08-25: Step 4 implemented. Fixtures under `fixtures/parsers/`;
+  re-run checks with `npx tsx scripts/verify-parsers.ts`. Dream-company
+  substring matching is known to over-match (Meta ⊆ Metasoft) — left as
+  an open question rather than silently tightening beyond the spec.

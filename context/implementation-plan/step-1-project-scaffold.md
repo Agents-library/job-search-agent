@@ -27,12 +27,12 @@ Nothing — this is the starting point.
 
 ## Verification
 
-- [ ] `npm install` succeeds.
-- [ ] `npm run build` succeeds with zero TypeScript errors.
-- [ ] `node dist/cli.js --help` lists `init`, `config`, and `tailor` with
+- [x] `npm install` succeeds.
+- [x] `npm run build` succeeds with zero TypeScript errors.
+- [x] `node dist/cli.js --help` lists `init`, `config`, and `tailor` with
       their intended flags documented (flags can be accepted and ignored
       at this stage, but `--help` output should already look like the
       final CLI).
-- [ ] `node dist/cli.js init`, `node dist/cli.js config`, and
+- [x] `node dist/cli.js init`, `node dist/cli.js config`, and
       `node dist/cli.js tailor` all run without crashing (stub output
       only).
