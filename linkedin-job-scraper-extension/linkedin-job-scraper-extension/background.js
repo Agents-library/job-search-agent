@@ -65,9 +65,84 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true;
 });
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isJobsUrl(url) {
+  return typeof url === 'string' && /linkedin\.com\/jobs/i.test(url);
+}
+
+function isAuthWallUrl(url) {
+  return typeof url === 'string' && /linkedin\.com\/(login|checkpoint|authwall|uas\/login)/i.test(url);
+}
+
+async function pageReadyState(tabId) {
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => document.readyState,
+    });
+    return result || '';
+  } catch {
+    return '';
+  }
+}
+
+// LinkedIn job search keeps the Chrome tab in "loading" almost forever (XHR,
+// websockets). Waiting for status === 'complete' is what caused the false
+// "did not finish loading" stop. Ready means: we are on a /jobs URL and the
+// document is at least interactive so the content script can run.
+async function waitForJobsTab(tabId, timeoutMs = 90000) {
+  const deadline = Date.now() + timeoutMs;
+  let sawJobsUrlAt = 0;
+
+  while (Date.now() < deadline) {
+    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    if (!tab) throw new Error('search tab was closed');
+
+    if (isAuthWallUrl(tab.url)) {
+      throw new Error('LinkedIn asked for login or a checkpoint — sign in in that tab, then start again');
+    }
+
+    if (isJobsUrl(tab.url)) {
+      if (!sawJobsUrlAt) sawJobsUrlAt = Date.now();
+      const ready = await pageReadyState(tabId);
+      const documentReady = ready === 'interactive' || ready === 'complete';
+      const urlStable = Date.now() - sawJobsUrlAt >= 1500;
+      if (documentReady || urlStable || tab.status === 'complete') {
+        return tab;
+      }
+    }
+
+    await sleep(400);
+  }
+  throw new Error('LinkedIn jobs page did not become reachable — keep the tab open and try again after it shows results');
+}
+
+async function beginOnTab(tabId, settings) {
+  let lastError = 'could not reach content script';
+  for (let attempt = 0; attempt < 20; attempt++) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: 'begin', settings });
+      return;
+    } catch (e) {
+      lastError = e && e.message ? e.message : lastError;
+      try {
+        await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
+      } catch {
+        // Tab may still be navigating; retry.
+      }
+      await sleep(800);
+    }
+  }
+  throw new Error(`${lastError} — reload the extension and confirm you are logged into LinkedIn`);
+}
+
 async function startRun(settings) {
   buffer = [];
   runSettings = settings;
+  finishing = false;
   await chrome.storage.local.set({
     runState: { phase: 'opening LinkedIn…', captured: 0, maxResults: settings.maxResults },
   });
@@ -76,18 +151,16 @@ async function startRun(settings) {
   const tab = await chrome.tabs.create({ url, active: true });
   activeTabId = tab.id;
 
-  // Wait for the tab to finish loading, then tell the content script to begin.
-  const listener = (tabId, info) => {
-    if (tabId === activeTabId && info.status === 'complete') {
-      chrome.tabs.onUpdated.removeListener(listener);
-      setTimeout(() => {
-        chrome.tabs.sendMessage(activeTabId, { type: 'begin', settings }).catch(() => {
-          finishRun('could not reach content script — is the extension enabled on this page?', true);
-        });
-      }, 1500);
-    }
-  };
-  chrome.tabs.onUpdated.addListener(listener);
+  try {
+    await setRunState({ phase: 'waiting for LinkedIn jobs page…' });
+    await waitForJobsTab(activeTabId);
+    await setRunState({ phase: 'starting scrape…' });
+    await sleep(800);
+    await beginOnTab(activeTabId, settings);
+    await setRunState({ phase: 'scraping…' });
+  } catch (e) {
+    finishRun(e.message || 'failed to start scrape', true);
+  }
 }
 
 function stopRun(reason) {
